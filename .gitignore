@@ -1,0 +1,16 @@
+# Simulation outputs & temporary files
+work/
+transcript
+*.wlf
+*.log
+*.vcd
+*.vvp
+*.ucdb
+*.ini
+vsim.dbg
+run_test.v
+coverage/
+log/
+rep.log
+sim.log
+compile.log

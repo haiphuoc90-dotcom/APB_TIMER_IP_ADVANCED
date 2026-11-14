@@ -1,24 +1,56 @@
-// ==============================================================================
-// Testcase: apb_protocol_chk
-// Description: Verify standard APB write and read transfers handshake
-// ==============================================================================
-$display("------------------------------------------------------------");
-$display("[TESTCASE] apb_protocol_chk: Starting APB protocol handshake check");
-$display("------------------------------------------------------------");
+task run_test();
+    reg [31:0] task_rdata;
+    reg        err;
+    begin
 
-reset_dut();
+        err = 0;
+        $display("==================================================");
+        $display("=== Test Case: APB Protocol Test ====");
+        $display("==================================================");
 
-// Write transfer
-apb_wr(TCMP0_ADDR, 32'h1234_5678);
+        //normal APB
+        test_bench.apb_wr(ADDR_TDR0, 32'h3333_3333);
 
-// Read transfer
-apb_rd(TCMP0_ADDR, rd_val);
-cmp_data(rd_val, 32'h1234_5678, "TCMP0_APB_TRANSFER");
+        test_bench.apb_rd( ADDR_TDR0, task_rdata);
+        test_bench.cmp_data( ADDR_TDR0, task_rdata, 32'h3333_3333, 32'hffff_ffff);
 
-if (err_cnt == 0) begin
-    $display("[RESULT: PASSED] APB protocol handshake check passed.");
-end else begin
-    $display("[RESULT: FAILED] APB protocol check failed with %0d errors.", err_cnt);
-end
-$display("End time: %0t", $time);
-$finish;
+        //wrong protocol test
+        $display("penable does not assert");
+        test_bench.apb_err_penable = 1;
+        test_bench.apb_wr(ADDR_TDR0, 32'h5555_5555); //error write
+        test_bench.apb_err_penable = 0;
+
+        test_bench.apb_rd( ADDR_TDR0, task_rdata);//read normal
+        test_bench.cmp_data( ADDR_TDR0, task_rdata, 32'h3333_3333, 32'hffff_ffff);
+
+        test_bench.apb_err_penable = 1;
+        test_bench.apb_rd( ADDR_TDR0, task_rdata);//read error
+        test_bench.cmp_data( ADDR_TDR0, task_rdata, 32'h3333_3333, 32'hffff_ffff);
+        test_bench.apb_err_penable = 0;
+
+        $display("psel does not assert");
+        test_bench.apb_err_psel = 1;
+        test_bench.apb_wr(ADDR_TDR0, 32'h7777_7777); //error write
+        test_bench.apb_err_psel = 0;
+
+        test_bench.apb_rd( ADDR_TDR0, task_rdata);//read normal
+        test_bench.cmp_data( ADDR_TDR0, task_rdata, 32'h3333_3333, 32'hffff_ffff);
+
+        test_bench.apb_err_psel = 1;
+        test_bench.apb_rd( ADDR_TDR0, task_rdata);//read error
+        test_bench.cmp_data( ADDR_TDR0, task_rdata, 32'h3333_3333, 32'hffff_ffff);
+        test_bench.apb_err_psel = 0;
+
+        test_bench.apb_wr(ADDR_TDR0, 32'h9999_9999); //write normal
+        test_bench.apb_rd( ADDR_TDR0, task_rdata);//read normal
+        test_bench.cmp_data( ADDR_TDR0, task_rdata, 32'h9999_9999, 32'hffff_ffff);
+
+
+
+        if( test_bench.err != 0 )
+            $display("Test_result FAILED");
+        else
+            $display("Test_result PASSED");
+
+    end
+endtask

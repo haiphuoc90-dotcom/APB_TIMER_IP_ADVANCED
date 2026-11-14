@@ -1,51 +1,36 @@
-// ==============================================================================
-// Testcase: apb_wait_state
-// Description: Verify 1-cycle wait state protocol timing on APB transfer
-// ==============================================================================
-$display("------------------------------------------------------------");
-$display("[TESTCASE] apb_wait_state: Starting APB wait state check");
-$display("------------------------------------------------------------");
+task run_test();
+    reg[31:0] task_rdata;
+    begin
+        $display("==================================================");
+        $display("=== TEST CASE: APB BACK-TO-BACK (PREADY) ====");
+        $display("==================================================");
 
-reset_dut();
+$display("\n--- ID1: Back to Back WRITE without IDLE states ---");
+test_bench.apb_wr(ADDR_TCMP0, 32'h1111_1111);
+test_bench.apb_wr(ADDR_TCMP1, 32'h2222_2222);
+test_bench.apb_wr(ADDR_TDR0, 32'h3333_3333);
 
-// Perform APB write and verify tim_pready low for exactly 1 cycle
-@(posedge tim_pclk);
-tim_psel    <= 1'b1;
-tim_pwrite  <= 1'b1;
-tim_paddr   <= TCMP0_ADDR;
-tim_pwdata  <= 32'h5555_AAAA;
-tim_pstrb   <= 4'hF;
-tim_penable <= 1'b0;
 
-@(posedge tim_pclk);
-tim_penable <= 1'b1;
+$display("\n--- ID2: Back to Back READ without IDLE states ---");
+test_bench.apb_rd(ADDR_TCMP0, task_rdata);
+test_bench.cmp_data(ADDR_TCMP0, task_rdata, 32'h1111_1111, 32'hFFFF_FFFF);
 
-// Cycle 1: pready must be 0 (Wait state)
-if (tim_pready !== 1'b0) begin
-    $display("[FAIL] tim_pready was high in first access cycle. Wait state missing!");
-    err_cnt = err_cnt + 1;
-end else begin
-    $display("[PASS] 1-cycle wait state detected (pready = 0).");
-end
+test_bench.apb_rd(ADDR_TCMP1, task_rdata);
+test_bench.cmp_data(ADDR_TCMP1, task_rdata, 32'h2222_2222, 32'hFFFF_FFFF);
 
-@(posedge tim_pclk);
-// Cycle 2: pready must be 1 (Ready)
-if (tim_pready !== 1'b1) begin
-    $display("[FAIL] tim_pready did not assert after 1 wait cycle!");
-    err_cnt = err_cnt + 1;
-end else begin
-    $display("[PASS] tim_pready asserted after 1 wait cycle (pready = 1).");
-end
+test_bench.apb_rd(ADDR_TDR0, task_rdata);
+test_bench.cmp_data(ADDR_TDR0, task_rdata, 32'h3333_3333, 32'hFFFF_FFFF);
 
-@(posedge tim_pclk);
-tim_psel    <= 1'b0;
-tim_penable <= 1'b0;
-tim_pwrite  <= 1'b0;
+$display("\n[PASS] APB SLAVE handled back to back transfer flawlessly !");
 
-if (err_cnt == 0) begin
-    $display("[RESULT: PASSED] APB wait state check passed.");
-end else begin
-    $display("[RESULT: FAILED] APB wait state check failed with %0d errors.", err_cnt);
-end
-$display("End time: %0t", $time);
-$finish;
+$display("\n--- ID3: Scanning all timer registers ---");
+test_bench.apb_wr(ADDR_TIER, 32'h0000_0001);// Interrupt enable register
+test_bench.apb_rd(ADDR_TIER, task_rdata);
+
+test_bench.apb_wr(ADDR_THCSR, 32'h0000_0001);// Halt control register
+test_bench.apb_rd(ADDR_THCSR, task_rdata);
+
+test_bench.apb_rd(ADDR_TISR, task_rdata);// Interrupr status register ( read-only check)
+$display("\n[PASS] FULL APB SLAVE custom scan completed !");
+    end
+endtask

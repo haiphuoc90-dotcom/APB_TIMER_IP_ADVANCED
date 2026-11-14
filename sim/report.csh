@@ -10,7 +10,7 @@ touch $log
 printf "|-----------------------------------------------------------------------------------------|\n" >> $log
 printf "|%-40s |%-30s |%-20s |\n" " PAT_NAME" " RUN_DATE" " RESULT"                                 >> $log
 printf "|-----------------------------------------------------------------------------------------|\n" >> $log
-foreach pat (`cat pat.list | sed '\/\//d'`)
+foreach pat (`grep -v '^//' pat.list`)
     echo $pat
     set sim_log = "log/${pat}.log"
     set res = ""

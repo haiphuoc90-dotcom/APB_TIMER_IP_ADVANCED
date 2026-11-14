@@ -6,7 +6,7 @@ if( ($#argv > 0) && ("$1" == "cov") ) then
     set cov = 1
 endif
 
-foreach pat (`cat pat.list | sed '\/\//d'`)
+foreach pat (`grep -v '^//' pat.list`)
     echo $pat
     if( $cov ) then
         make all_cov TESTNAME=${pat}

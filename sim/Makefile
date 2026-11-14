@@ -42,7 +42,13 @@ run_cov:
 	mv $(TESTNAME).log sim.log
 
 wave:
-	vsim -i -view vsim.wlf -do "add wave vsim:/$(TB_NAME)/*; radix -$(RADIX)" &
+	@if command -v vsim >/dev/null 2>&1; then \
+		vsim -i -view vsim.wlf -do "add wave vsim:/$(TB_NAME)/*; radix -$(RADIX)" & \
+	elif command -v gtkwave >/dev/null 2>&1; then \
+		gtkwave waveform.vcd & \
+	else \
+		echo "Neither vsim nor gtkwave found. Please install gtkwave: sudo apt install gtkwave"; \
+	fi
 
 gen_cov:
 	mkdir -p coverage

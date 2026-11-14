@@ -346,6 +346,8 @@ mod_golden_cnt u_tb_cnt
 // `include "test_case/apb_wait_state.v"
 
 initial begin
+    $dumpfile("waveform.vcd");
+    $dumpvars(0, test_bench);
     $display("==========================================================================================================");
     $display("          STARTING TIMER IP VERIFICATION            ");
     $display("==========================================================================================================");

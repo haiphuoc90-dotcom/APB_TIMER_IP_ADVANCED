@@ -1,0 +1,12 @@
+apb_error_handling
+apb_wait_state
+apb_protocol_chk
+reg_init_chk
+reg_reserved_chk
+reg_1hot_chk
+reg_byte_access
+reg_rw_chk
+cnt_halt_chk
+cnt_ctrl_chk
+interrupt_chk
+counter_chk

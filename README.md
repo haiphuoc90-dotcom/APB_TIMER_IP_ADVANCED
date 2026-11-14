@@ -4,7 +4,7 @@
 [![Bus Protocol](https://img.shields.io/badge/Bus_Protocol-AMBA_3_APB-green.svg)](file:///rtl/apb_slave.v)
 [![Simulation](https://img.shields.io/badge/Simulation-QuestaSim_%7C_Icarus_Verilog-orange.svg)](file:///sim/Makefile)
 [![Regression](https://img.shields.io/badge/Regression-12%2F12_PASSED-brightgreen.svg)](file:///sim/pat.list)
-[![Coverage](https://img.shields.io/badge/Coverage-100%25_Statement_%7C_Branch_%7C_Expression_%7C_Toggle-success.svg)](file:///code/README.md#code-coverage-and-waiver-analysis)
+[![Coverage](https://img.shields.io/badge/Coverage-100%25_Statement_%7C_Branch_%7C_Expression_%7C_Toggle-success.svg)](file:///code/README.md#9-code-coverage--waiver-analysis)
 
 ---
 
@@ -38,8 +38,8 @@ The **Timer IP** is an essential on-chip peripheral designed to generate accurat
 - **Hardware Error Handling:** Slave error generation via `tim_pslverr` to trap and reject illegal configurations or unaligned transfers.
 - **Granular Byte-Level Access:** Full support for unaligned byte writes using `tim_pstrb[3:0]`.
 - **Debug Halt Capability:** Controlled pausing mechanism via `dbg_mode`, `halt_req`, and `halt_ack` to suspend counting during CPU debug sessions without corrupting register state.
-- **Programmable Prescaler Clock Divider:** Divide-by-`2^(div_val)` ($2^0$ to $2^8 = 256$) prescaler allowing flexible counter ticking speeds.
-- **Hardware Auto-Clear:** Automatic 64-bit counter reinitialization to `64'd0` upon `timer_en` falling edge ($1 \to 0$).
+- **Programmable Prescaler Clock Divider:** Divide-by-`2^(div_val)` (`2^0` to `2^8 = 256`) prescaler allowing flexible counter ticking speeds.
+- **Hardware Auto-Clear:** Automatic 64-bit counter reinitialization to `64'd0` upon `timer_en` falling edge (`1 -> 0`).
 - **Independent Interrupt Architecture:** 64-bit comparator, maskable output (`tim_int`), and Write-1-to-Clear (RW1C) status latch (`TISR`).
 
 ---
@@ -70,7 +70,9 @@ The table below lists all top-level I/O signals of the Timer IP (`timer_top.v`):
 
 The Timer IP is partitioned into 5 modular RTL sub-blocks:
 
-```
+![Timer Top Block Diagram](docs/images/timer_top_block_diagram.jpg)
+
+```text
 +--------------------------------------------------------------------------------------------------------+
 |                                              timer_top                                                 |
 |                                                                                                        |
@@ -131,7 +133,7 @@ The Timer IP is partitioned into 5 modular RTL sub-blocks:
 
 #### 1. Timer Control Register (TCR) – `0x00`
 
-```
+```text
  31                                       12 11        8 7          2   1       0
 +-------------------------------------------+-----------+------------+-------+-------+
 |                 RESERVED                  |  div_val  |  RESERVED  |div_en |tim_en |
@@ -142,10 +144,10 @@ The Timer IP is partitioned into 5 modular RTL sub-blocks:
 | Bit | Name | Type | Reset Value | Description |
 | :---: | :---: | :---: | :---: | :--- |
 | `31:12` | RESERVED | RO | `20'h0` | Reserved. Always reads 0. |
-| `11:8` | `div_val[3:0]` | RW | `4'b0001` | **Prescaler Division Factor Setting:**<br>• `4'b0000`: Counting speed is not divided ($2^0 = 1$)<br>• `4'b0001`: Divided by 2 ($2^1$, default)<br>• `4'b0010`: Divided by 4 ($2^2$)<br>• `4'b0011`: Divided by 8 ($2^3$)<br>• `4'b0100`: Divided by 16 ($2^4$)<br>• `4'b0101`: Divided by 32 ($2^5$)<br>• `4'b0110`: Divided by 64 ($2^6$)<br>• `4'b0111`: Divided by 128 ($2^7$)<br>• `4'b1000`: Divided by 256 ($2^8$)<br>• `Others`: **Prohibited settings**. Writing an invalid value triggers an APB error response (`tim_pslverr`) and `div_val` is not updated.<br>*(Note: Changing `div_val` while `timer_en == 1` is strictly prohibited and returns `tim_pslverr`).* |
+| `11:8` | `div_val[3:0]` | RW | `4'b0001` | **Prescaler Division Factor Setting:**<br>• `4'b0000`: Counting speed is not divided (`2^0 = 1`)<br>• `4'b0001`: Divided by 2 (`2^1 = 2`, default)<br>• `4'b0010`: Divided by 4 (`2^2 = 4`)<br>• `4'b0011`: Divided by 8 (`2^3 = 8`)<br>• `4'b0100`: Divided by 16 (`2^4 = 16`)<br>• `4'b0101`: Divided by 32 (`2^5 = 32`)<br>• `4'b0110`: Divided by 64 (`2^6 = 64`)<br>• `4'b0111`: Divided by 128 (`2^7 = 128`)<br>• `4'b1000`: Divided by 256 (`2^8 = 256`)<br>• `Others`: **Prohibited settings**. Writing an invalid value triggers an APB error response (`tim_pslverr`) and `div_val` is not updated.<br>*(Note: Changing `div_val` while `timer_en == 1` is strictly prohibited and returns `tim_pslverr`).* |
 | `7:2` | RESERVED | RO | `6'b0` | Reserved. Always reads 0. |
 | `1` | `div_en` | RW | `1'b0` | **Counter Prescaler Enable:**<br>• `0`: Disabled. Counter increments directly on system clock.<br>• `1`: Enabled. Counter increments based on `div_val`.<br>*(Note: Changing `div_en` while `timer_en == 1` is strictly prohibited and returns `tim_pslverr`).* |
-| `0` | `timer_en` | RW | `1'b0` | **Master Timer Enable:**<br>• `0`: Disabled. Counter is paused.<br>• `1`: Enabled. Counter starts incrementing.<br>*(Note: A High-to-Low transition ($1 \to 0$) triggers hardware auto-clear of `TDR0` and `TDR1`).* |
+| `0` | `timer_en` | RW | `1'b0` | **Master Timer Enable:**<br>• `0`: Disabled. Counter is paused.<br>• `1`: Enabled. Counter starts incrementing.<br>*(Note: A High-to-Low transition (`1 -> 0`) triggers hardware auto-clear of `TDR0` and `TDR1`).* |
 
 ---
 
@@ -153,13 +155,13 @@ The Timer IP is partitioned into 5 modular RTL sub-blocks:
 
 | Bit | Name | Type | Reset Value | Description |
 | :---: | :---: | :---: | :---: | :--- |
-| `31:0` | `TDR0[31:0]` | RW | `32'h0000_0000` | Lower 32 bits of the 64-bit counter (`cnt[31:0]`). Supports byte access via `tim_pstrb`. Cleared to 0 automatically when `timer_en` transitions from $1 \to 0$. |
+| `31:0` | `TDR0[31:0]` | RW | `32'h0000_0000` | Lower 32 bits of the 64-bit counter (`cnt[31:0]`). Supports byte access via `tim_pstrb`. Cleared to 0 automatically when `timer_en` transitions from `1 -> 0`. |
 
 #### 3. Timer Data Register 1 (TDR1) – `0x08`
 
 | Bit | Name | Type | Reset Value | Description |
 | :---: | :---: | :---: | :---: | :--- |
-| `31:0` | `TDR1[31:0]` | RW | `32'h0000_0000` | Upper 32 bits of the 64-bit counter (`cnt[63:32]`). Supports byte access via `tim_pstrb`. Cleared to 0 automatically when `timer_en` transitions from $1 \to 0$. |
+| `31:0` | `TDR1[31:0]` | RW | `32'h0000_0000` | Upper 32 bits of the 64-bit counter (`cnt[63:32]`). Supports byte access via `tim_pstrb`. Cleared to 0 automatically when `timer_en` transitions from `1 -> 0`. |
 
 ---
 
@@ -211,7 +213,20 @@ The Timer IP is partitioned into 5 modular RTL sub-blocks:
 
 The APB Slave block provides a standard AMBA 3 APB interface between the system bus and internal registers.
 
-```
+#### Timing Waveforms
+![APB Write Waveform](docs/images/apb_write_waveform.png)
+*Figure: APB Slave Write waveform with 1-cycle wait state.*
+
+![APB Read Waveform](docs/images/apb_read_waveform.png)
+*Figure: APB Slave Read waveform with 1-cycle wait state.*
+
+![APB Error Waveform](docs/images/apb_error_waveform.png)
+*Figure: APB Slave Error Response timing waveform.*
+
+#### Logic Diagram
+![APB Slave Logic Diagram](docs/images/apb_slave_logic.jpg)
+
+```text
                   +----------------------------------------------+
   tim_psel ------>|                                              |
   tim_penable --->|              1-Cycle Wait State             |-----> tim_pready
@@ -239,24 +254,32 @@ The APB Slave block provides a standard AMBA 3 APB interface between the system 
 
 ### 6.2. Register Block (`rtl/register.v`)
 
-The Register block acts as the central control hub:
+The Register block acts as the central configuration and status control hub.
 
-```
-  tim_paddr[11:0] ------> [ Address Decoder ] -----> tcr_wr, tdr0_wr, tdr1_wr, tcmp0/1_wr...
-  tim_pwdata[31:0] -----> [ Byte Strobe Mask ] ----> MUX per byte based on tim_pstrb[3:0]
-  
-  Illegal Access Trap:
-  - div_val > 8                         ---+
-  - Changing div_val when timer_en == 1   -+--> reg_error_flag ----> apb_slave (tim_pslverr)
-  - Changing div_en when timer_en == 1  ---+
-  
-  Read Data Routing:
-  - Addr MUX: TCR / TDR0 / TDR1 / TCMP0 / TCMP1 / TIER / TISR / THCSR
-  - Security & Power Gate: rdata = rd_en ? read_mux_out : 32'h0000_0000
-```
+#### Sơ đồ giải mã địa chỉ & Điều khiển ghi (Address Decoder)
+![Address Decoder Logic](docs/images/address_decoder_logic.jpg)
 
-1. **Address Decoding:** Evaluates `addr[11:0]` against predefined offsets to generate active-high write strobes.
-2. **Hardware Protection (Error Flag):** `reg_error_flag` traps prohibited configurations:
+#### Sơ đồ logic thanh ghi TCR (Timer Control Register)
+![TCR Logic Diagram](docs/images/tcr_logic.jpg)
+
+#### Sơ đồ logic thanh ghi TDR0 và TDR1 (Data Registers)
+![TDR Logic Diagram](docs/images/tdr_logic.jpg)
+
+#### Sơ đồ logic thanh ghi TCMP0 và TCMP1 (Compare Registers)
+![TCMP Logic Diagram](docs/images/tcmp_logic.jpg)
+
+#### Sơ đồ logic thanh ghi TIER & THCSR
+![TIER Logic Diagram](docs/images/tier_logic.jpg)
+*Figure: TIER (Interrupt Enable) logic diagram.*
+
+![THCSR Logic Diagram](docs/images/thcsr_logic.jpg)
+*Figure: THCSR (Halt Control Status) logic diagram.*
+
+#### Sơ đồ bộ dồn kênh đọc (Read Multiplexer)
+![Read Multiplexer Logic](docs/images/read_mux_logic.jpg)
+
+1. **Address Decoding:** Evaluates `addr[11:0]` against predefined offsets to generate active-high write strobes (`tcr_wr`, `tdr0_wr`, `tdr1_wr`, `tcmp0_wr`, `tcmp1_wr`, `tier_wr`, `tisr_wr`, `thcsr_wr`).
+2. **Hardware Protection (`reg_error_flag`):** Traps prohibited configurations:
    - Setting `div_val > 4'd8`.
    - Modifying `div_val` while `timer_en == 1`.
    - Modifying `div_en` while `timer_en == 1`.
@@ -270,7 +293,26 @@ The Register block acts as the central control hub:
 
 The Counter Control block serves as the operational brain and timing prescaler for the 64-bit counter:
 
-```
+#### Timing Waveforms (Frequency Division & Debug Halt)
+![Counter Control Div 1](docs/images/counter_control_div1_waveform.png)
+*Figure: Counter Control timing with div_val = 1 (Divide by 2).*
+
+![Counter Control Div 2](docs/images/counter_control_div2_waveform.png)
+*Figure: Counter Control timing with div_val = 2 (Divide by 4).*
+
+![Counter Control Div 3](docs/images/counter_control_div3_waveform.png)
+*Figure: Counter Control timing with div_val = 3 (Divide by 8).*
+
+![Halt Accepted](docs/images/counter_control_halt_ack_waveform.png)
+*Figure: Halt Request Accepted (dbg_mode = 1).*
+
+![Halt Denied](docs/images/counter_control_halt_denied_waveform.png)
+*Figure: Halt Request Denied (dbg_mode = 0).*
+
+#### Logic Diagram
+![Counter Control Detailed Logic](docs/images/counter_control_logic.jpg)
+
+```text
                       +---------------------------------------+
   halt_req ---------->|             halt_ack Logic            |-----> halt_ack
   dbg_mode ---------->|        (halt_ack = halt_req & dbg)    |
@@ -296,14 +338,16 @@ The Counter Control block serves as the operational brain and timing prescaler f
 
 1. **Halt Acknowledge Logic:** Combinational zero-latency gate: `halt_ack = halt_req & dbg_mode`.
 2. **Dynamic Limit Calculation:** Computes the prescaler threshold dynamically:
-   $$\text{limit} = (8'd1 \ll \text{div\_val}) - 8'd1$$
-   - `div_val = 1` $\to$ limit = 1 (Divide by 2)
-   - `div_val = 2` $\to$ limit = 3 (Divide by 4)
-   - `div_val = 3` $\to$ limit = 7 (Divide by 8)
-   - `div_val = 8` $\to$ limit = 255 (Divide by 256)
+   ```verilog
+   limit = (8'd1 << div_val) - 8'd1;
+   ```
+   - `div_val = 1` → limit = 1 (Divide by 2)
+   - `div_val = 2` → limit = 3 (Divide by 4)
+   - `div_val = 3` → limit = 7 (Divide by 8)
+   - `div_val = 8` → limit = 255 (Divide by 256)
 3. **Prescaler Cascade Priority:**
-   - **Clear:** `(~timer_en) | (~div_en) | (is_limit & ~halt_ack)` $\to$ resets `divisor_counter` to 0.
-   - **Increment:** `timer_en & div_en & ~halt_ack` $\to$ `divisor_counter + 1`.
+   - **Clear:** `(~timer_en) | (~div_en) | (is_limit & ~halt_ack)` → resets `divisor_counter` to 0.
+   - **Increment:** `timer_en & div_en & ~halt_ack` → `divisor_counter + 1`.
    - **Hold:** Preserves `divisor_counter` when `halt_ack == 1`.
 4. **Auto-Clear Edge Detector:** Registers `timer_en` into `timer_en_dly`. When `~timer_en & timer_en_dly` evaluates to 1, a single-cycle synchronous pulse `counter_clr` is dispatched to reset the 64-bit counter.
 
@@ -313,7 +357,14 @@ The Counter Control block serves as the operational brain and timing prescaler f
 
 The Counter block implements the 64-bit timing engine with a strict 3-tier multiplexer priority cascade:
 
-```
+#### Timing Waveform (64-bit Counter Sequential Write)
+![Counter Write Waveform](docs/images/counter_write_waveform.png)
+*Figure: Two-phase 32-bit APB write updating the 64-bit counter.*
+
+#### Logic Diagram
+![Counter Logic Diagram](docs/images/counter_logic.jpg)
+
+```text
                   +-------------------------------------------------------------+
                   |                  64-bit Counter Architecture                |
                   +-------------------------------------------------------------+
@@ -353,7 +404,14 @@ The Counter block implements the 64-bit timing engine with a strict 3-tier multi
 
 The Interrupt block manages event detection, status holding, and CPU notification:
 
-```
+#### Timing Waveform (Threshold Trigger & RW1C Clear)
+![Interrupt Waveform](docs/images/interrupt_waveform.png)
+*Figure: Interrupt assertion upon counter match and software RW1C clearance.*
+
+#### Logic Diagram
+![Interrupt Logic Diagram](docs/images/interrupt_logic.jpg)
+
+```text
   cnt[63:0] --------\
                      [ 64-bit Comparator (==) ] -----> int_trigger
   comp_val[63:0] ---/                                     |
@@ -406,7 +464,7 @@ Verification is implemented in `code/tb/test_bench.v` with dedicated modular tes
 | 7 | `reg_byte_access` | Byte-level access verification with individual `tim_pstrb[3:0]` strobes on `TDR` and `TCMP` | **PASSED** |
 | 8 | `reg_rw_chk` | Full 32-bit data read/write retention and write data integrity | **PASSED** |
 | 9 | `cnt_halt_chk` | Debug halt acceptance (`dbg_mode=1`) vs rejection (`dbg_mode=0`), counter freeze and resume | **PASSED** |
-| 10 | `cnt_ctrl_chk` | Prescaler divider ratios (divide by 1, 2, 4, 8 ... 256) and `timer_en` auto-clear ($1 \to 0$) | **PASSED** |
+| 10 | `cnt_ctrl_chk` | Prescaler divider ratios (divide by 1, 2, 4, 8 ... 256) and `timer_en` auto-clear (`1 -> 0`) | **PASSED** |
 | 11 | `interrupt_chk` | Compare threshold match, interrupt pending latch, mask enable (`TIER`), and RW1C clear (`TISR`) | **PASSED** |
 | 12 | `counter_chk` | 32-bit rollover, 64-bit full-scale overflow, counter manual reload via `TDR0`/`TDR1` | **PASSED** |
 
@@ -416,7 +474,7 @@ Verification is implemented in `code/tb/test_bench.v` with dedicated modular tes
 
 All 12 testcases were executed under QuestaSim/ModelSim and Icarus Verilog regression suites.
 
-```
+```text
 +---------------------+-----------------------+--------+
 | PAT_NAME            | RUN_DATE              | RESULT |
 +---------------------+-----------------------+--------+
@@ -460,7 +518,7 @@ coverage exclude -src ../rtl/apb_slave.v -code e -line 55 -comment {illegal AMBA
 
 ### 9.4. Final Coverage Summary (100% Achieved)
 
-```
+```text
 ================================================================================
 Coverage Report Summary Data by Instance (Post-Exclusion)
 ================================================================================
@@ -508,6 +566,30 @@ Total Design Coverage: 100.00% across Statements, Branches, Conditions, Expressi
 
 ```text
 code/
+├── docs/                       # Project Documentation & Architecture Diagrams
+│   └── images/                 # Sơ đồ nguyên lý Draw.io & Waveforms
+│       ├── timer_top_block_diagram.jpg
+│       ├── apb_slave_logic.jpg
+│       ├── address_decoder_logic.jpg
+│       ├── tcr_logic.jpg
+│       ├── tdr_logic.jpg
+│       ├── tcmp_logic.jpg
+│       ├── tier_logic.jpg
+│       ├── thcsr_logic.jpg
+│       ├── read_mux_logic.jpg
+│       ├── counter_control_logic.jpg
+│       ├── counter_logic.jpg
+│       ├── interrupt_logic.jpg
+│       ├── apb_write_waveform.png
+│       ├── apb_read_waveform.png
+│       ├── apb_error_waveform.png
+│       ├── counter_control_div1_waveform.png
+│       ├── counter_control_div2_waveform.png
+│       ├── counter_control_div3_waveform.png
+│       ├── counter_control_halt_ack_waveform.png
+│       ├── counter_control_halt_denied_waveform.png
+│       ├── counter_write_waveform.png
+│       └── interrupt_waveform.png
 ├── rtl/                        # Synthesizable RTL Verilog source files
 │   ├── timer_top.v             # Top-level integration module
 │   ├── apb_slave.v             # AMBA 3 APB Slave & wait-state interface
@@ -578,5 +660,3 @@ View waveforms with GTKWave:
 ```bash
 gtkwave dump.vcd
 ```
-
-

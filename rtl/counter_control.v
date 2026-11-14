@@ -23,7 +23,7 @@ wire        cnt_en_pre_halt     ;
 wire[7:0]   next_divisor_counter;
 
 // 1. HALT ACKNOWLEDGE LOGIC (combinational)
-// acknowledge halt immediately if debug mode is active
+// acknowledge halt imeediately if debug mode is active
 assign halt_ack = halt_req & dbg_mode;
 
 // 2. FALLING EDGE DETECTOR (Auto-Clear logic)
@@ -61,8 +61,11 @@ always @(posedge sys_clk or negedge sys_rst_n) begin
     end
 end
 
-// 5. MAIN COUNTER ENABLE LOGIC (cnt_en)
-assign cnt_en_pre_halt = timer_en & ( (~div_en) | is_limit );
-assign cnt_en = cnt_en_pre_halt & (~halt_ack);
-
+// 5. MAIN COUNTER ENBALE GENERATION
+wire normal_mode_en = timer_en;
+wire div_mode_en = timer_en & is_limit & (~halt_ack) ;
+// select between normal mode and divided mode based on div_en
+assign cnt_en_pre_halt = div_en ? div_mode_en : normal_mode_en;
+// Final security gate: completely disable counting if halted
+assign cnt_en = cnt_en_pre_halt & (~halt_ack) ;
 endmodule

@@ -34,10 +34,11 @@ assign clear_mux_out = interrupt_clear ? 1'b0 : set_mux_out;
 
 // 4. SEQUENTIAL LOGIC (D-FF)
 always @(posedge sys_clk or negedge sys_rst_n) begin
-    if (!sys_rst_n)
+    if (!sys_rst_n) begin
         int_status_q <= 1'b0;
-    else
+    end else begin
         int_status_q <= clear_mux_out;
+    end
 end
 
 // 5. OUTPUT ASSIGNMENT
